@@ -84,7 +84,7 @@ def exec():
         rounds += 1
         bits_S, bases_S = random_bits(BLOCK_SIZE)
         bases_A, bases_B = random_bits(BLOCK_SIZE)
-        qc = emitter_circuit(bits_S, bases_S, bases_A, bases_B)
+        qc = full_quantum_circuit(bits_S, bases_S, bases_A, bases_B)
         compiled = transpile(qc, backend)
         result = backend.run(compiled, shots=1).result()
         bitstr = next(iter(result.get_counts()))
