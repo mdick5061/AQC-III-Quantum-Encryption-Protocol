@@ -80,7 +80,7 @@ def exec():
     bob_key   = []
     rounds    = 0
 
-    while len(alice_key < n_img_bits): 
+    while len(alice_key) < n_img_bits: 
         rounds += 1
         bits_S, bases_S = random_bits(BLOCK_SIZE)
         bases_A, bases_B = random_bits(BLOCK_SIZE)
