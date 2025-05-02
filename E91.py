@@ -86,6 +86,7 @@ def exec():
         bits_S, bases_S = random_bits(BLOCK_SIZE)
         bases_A, bases_B = random_bits(BLOCK_SIZE)
         qc = full_quantum_circuit(bits_S, bases_S, bases_A, bases_B)
+        for i in range(len(bases_S)): qc.measure(i,i)
         compiled = transpile(qc, backend)
         result = backend.run(compiled, shots=1).result()
         bitstr = next(iter(result.get_counts()))
