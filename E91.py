@@ -99,7 +99,7 @@ def exec():
         sift_B = meas_B[keep_mask]
 
         alice_key.extend(sift_A.tolist())
-        bob_key.extend(1^sift_B.tolist())
+        bob_key.extend((1^sift_B).tolist())
 
         print(f'Round {rounds:>3}: {len(alice_key):,}/{n_img_bits} key bits \r', end='')
     
