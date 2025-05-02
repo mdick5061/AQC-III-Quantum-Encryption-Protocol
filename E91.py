@@ -54,6 +54,7 @@ def measure_circuit(alice_bases, bob_bases):
     for i in range(size): 
         if alice_bases[i]: qc.h(i)
         if bob_bases[i]: qc.h(i+size)
+    return qc
 
 def full_quantum_circuit(source_bits, source_bases, alice_bases, bob_bases): 
     ec = emitter_circuit(source_bits, source_bases)
