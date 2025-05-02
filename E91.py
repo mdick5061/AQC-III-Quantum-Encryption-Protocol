@@ -118,3 +118,6 @@ def exec():
     dec_path.write_bytes(dec_bytes)
     assert dec_bytes == img_bytes
     print('\u2705 Success — decrypted image identical.')
+
+if __name__ == "__main__": 
+    exec()
