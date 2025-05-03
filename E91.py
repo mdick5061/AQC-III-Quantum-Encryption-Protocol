@@ -13,9 +13,11 @@ SAMPLE_RATE     = 0.10
 
 if not IMG_PATH.exists():
     raise FileNotFoundError(f'Missing {IMG_PATH}. Drop an image or edit IMG_PATH.')
-img_bytes  = IMG_PATH.read_bytes()
-n_img_bits = len(img_bytes)*8
-print(f'Image size: {len(img_bytes):,} bytes ({n_img_bits:,} bits)')
+# img_bytes  = IMG_PATH.read_bytes()
+# n_img_bits = len(img_bytes)*8
+# print(f'Image size: {len(img_bytes):,} bytes ({n_img_bits:,} bits)')
+img_bytes = None
+n_img_bits = 32
 
 def random_bits(n):
     return (np.random.randint(2, size=n, dtype=np.uint8),
@@ -86,7 +88,7 @@ def exec():
         bits_S, bases_S = random_bits(BLOCK_SIZE)
         bases_A, bases_B = random_bits(BLOCK_SIZE)
         qc = full_quantum_circuit(bits_S, bases_S, bases_A, bases_B)
-        for i in range(len(bases_S)): qc.measure(i,i)
+        for i in range(len(bases_A) + len(bases_B)): qc.measure(i,i)
         compiled = transpile(qc, backend)
         result = backend.run(compiled, shots=1).result()
         bitstr = next(iter(result.get_counts()))
@@ -105,6 +107,8 @@ def exec():
     
     alice_key = np.array(alice_key[:n_img_bits], dtype=np.uint8)
     bob_key   = np.array(bob_key  [:n_img_bits], dtype=np.uint8)
+    print(alice_key)
+    print(bob_key)
     assert np.array_equal(alice_key, bob_key)
     print(f'\nKey done: {len(alice_key):,} bits')
 
