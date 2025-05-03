@@ -31,7 +31,7 @@ def random_bits(n):
 def emitter_circuit(source_bits, source_bases): 
     size = len(source_bases)
     assert size == len(source_bits)
-    qc = QuantumCircuit(2*size, name='Laser')
+    qc = QuantumCircuit(2*size, 2*size, name='Laser')
     for i,(bit,basis) in enumerate(zip(source_bits,source_bases)): 
         if bit: qc.x(i)
         if basis: qc.h(i)
@@ -49,7 +49,7 @@ def emitter_circuit(source_bits, source_bases):
 # we use one circuit for both
 def measure_circuit(alice_bases, bob_bases): 
     size = len(alice_bases)
-    qc = QuantumCircuit(2*size, name='people')
+    qc = QuantumCircuit(2*size, 2*size, name='Person')
     assert size == len(bob_bases)
     for i in range(size): 
         if alice_bases[i]: qc.h(i)
