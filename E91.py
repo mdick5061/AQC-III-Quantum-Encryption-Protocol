@@ -13,11 +13,9 @@ SAMPLE_RATE     = 0.10
 
 if not IMG_PATH.exists():
     raise FileNotFoundError(f'Missing {IMG_PATH}. Drop an image or edit IMG_PATH.')
-# img_bytes  = IMG_PATH.read_bytes()
-# n_img_bits = len(img_bytes)*8
-# print(f'Image size: {len(img_bytes):,} bytes ({n_img_bits:,} bits)')
-img_bytes = None
-n_img_bits = 32
+img_bytes  = IMG_PATH.read_bytes()
+n_img_bits = len(img_bytes)*8
+print(f'Image size: {len(img_bytes):,} bytes ({n_img_bits:,} bits)')
 
 def random_bits(n):
     return (np.random.randint(2, size=n, dtype=np.uint8),
