@@ -105,8 +105,6 @@ def exec():
     
     alice_key = np.array(alice_key[:n_img_bits], dtype=np.uint8)
     bob_key   = np.array(bob_key  [:n_img_bits], dtype=np.uint8)
-    print(alice_key)
-    print(bob_key)
     assert np.array_equal(alice_key, bob_key)
     print(f'\nKey done: {len(alice_key):,} bits')
 
