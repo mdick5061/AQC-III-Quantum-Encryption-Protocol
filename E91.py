@@ -40,9 +40,10 @@ def emitter_circuit(source_bits, source_bases):
         qc.cx(i,i+size)
 
         # change to instructed bit and basis
-        # entangled bit changes too (by entanglement)
         if bit: qc.x(i)
         if basis: qc.h(i)
+        if bit: qc.x(i+size)
+        if basis: qc.h(i+size)
     return qc
 
 # alice and bob quantum circits are the same: they guess bases and measure
