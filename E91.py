@@ -33,23 +33,23 @@ def emitter_circuit(source_bits, source_bases):
     assert size == len(source_bits)
     qc = QuantumCircuit(2*size, 2*size, name='Laser')
     for i,(bit,basis) in enumerate(zip(source_bits,source_bases)): 
-        if bit: qc.x(i)
-        if basis: qc.h(i)
+        # entangle inputs
         qc.x(i)
         qc.h(i)
-    for i,(bit,basis) in enumerate(zip(source_bits,source_bases)): 
-        if bit: qc.x(i+size)
-        if basis: qc.h(i+size)
         qc.x(i+size)
-    for i in range(size): 
         qc.cx(i,i+size)
+
+        # change to instructed bit and basis
+        # entangled bit changes too (by entanglement)
+        if bit: qc.x(i)
+        if basis: qc.h(i)
     return qc
 
 # alice and bob quantum circits are the same: they guess bases and measure
 # we use one circuit for both
 def measure_circuit(alice_bases, bob_bases): 
     size = len(alice_bases)
-    qc = QuantumCircuit(2*size, 2*size, name='Person')
+    qc = QuantumCircuit(2*size, 2*size, name='People')
     assert size == len(bob_bases)
     for i in range(size): 
         if alice_bases[i]: qc.h(i)
@@ -91,13 +91,17 @@ def exec():
         result = backend.run(compiled, shots=1).result()
         bitstr = next(iter(result.get_counts()))
         measurement = np.fromiter(map(int, bitstr[::-1]), dtype=np.uint8)
+        # first half is Alice's measurement
         meas_A = measurement[:len(measurement)//2]
+        # second half is Bob's measurement
         meas_B = measurement[len(measurement)//2:]
 
+        # When bases are equal, measurements must be opposite by entanglement
         keep_mask = bases_A == bases_B
         sift_A = meas_A[keep_mask]
         sift_B = meas_B[keep_mask]
 
+        # Flip Bob's bits so measurements are equal
         alice_key.extend(sift_A.tolist())
         bob_key.extend((1^sift_B).tolist())
 
