@@ -13,13 +13,20 @@ SAMPLE_RATE     = 0.10
 
 if not IMG_PATH.exists():
     raise FileNotFoundError(f'Missing {IMG_PATH}. Drop an image or edit IMG_PATH.')
-img_bytes  = IMG_PATH.read_bytes()
-n_img_bits = len(img_bytes)*8
-print(f'Image size: {len(img_bytes):,} bytes ({n_img_bits:,} bits)')
+# img_bytes  = IMG_PATH.read_bytes()
+# n_img_bits = len(img_bytes)*8
+# print(f'Image size: {len(img_bytes):,} bytes ({n_img_bits:,} bits)')
+img_bytes = None
+n_img_bits = 32
 
 def random_bits(n):
-    return (np.random.randint(2, size=n, dtype=np.uint8),
-            np.random.randint(2, size=n, dtype=np.uint8))  # data, bases
+    return np.random.randint(2, size=n, dtype=np.int8)
+
+def random_trits(n):  # determines bases
+    return np.random.randint(3, size=n, dtype=np.int8)
+
+def random_2bits(n):  # determines bases
+    return np.random.randint(4, size=n, dtype=np.int8)
 
 # the emitter circuit emits random bits in random bases
 # the emitter circuit produces 2*n bits, where the top n bits are 
@@ -40,10 +47,11 @@ def emitter_circuit(source_bits, source_bases):
         qc.cx(i,i+size)
 
         # change to instructed bit and basis
-        if bit: qc.x(i)
-        if basis: qc.h(i)
-        if bit: qc.x(i+size)
-        if basis: qc.h(i+size)
+        if bit: 
+            qc.x(i)
+            qc.x(i+size)
+        qc.rx(basis * np.pi/4, i)
+        qc.rx(basis * np.pi/4, i+size)
     return qc
 
 # alice and bob quantum circits are the same: they guess bases and measure
@@ -53,8 +61,8 @@ def measure_circuit(alice_bases, bob_bases):
     qc = QuantumCircuit(2*size, 2*size, name='People')
     assert size == len(bob_bases)
     for i in range(size): 
-        if alice_bases[i]: qc.h(i)
-        if bob_bases[i]: qc.h(i+size)
+        qc.rx(-alice_bases[i] * np.pi/4, i)
+        qc.rx(-bob_bases[i] * np.pi/4, i)
     return qc
 
 def full_quantum_circuit(source_bits, source_bases, alice_bases, bob_bases): 
@@ -84,14 +92,16 @@ def exec():
 
     while len(alice_key) < n_img_bits: 
         rounds += 1
-        bits_S, bases_S = random_bits(BLOCK_SIZE)
-        bases_A, bases_B = random_bits(BLOCK_SIZE)
+        bits_S = random_bits(BLOCK_SIZE)
+        bases_S = random_2bits(BLOCK_SIZE) - 1
+        bases_A = random_trits(BLOCK_SIZE)
+        bases_B = random_trits(BLOCK_SIZE) - 1
         qc = full_quantum_circuit(bits_S, bases_S, bases_A, bases_B)
         for i in range(len(bases_A) + len(bases_B)): qc.measure(i,i)
         compiled = transpile(qc, backend)
         result = backend.run(compiled, shots=1).result()
         bitstr = next(iter(result.get_counts()))
-        measurement = np.fromiter(map(int, bitstr[::-1]), dtype=np.uint8)
+        measurement = np.fromiter(map(int, bitstr[::-1]), dtype=np.int8)
         # first half is Alice's measurement
         meas_A = measurement[:len(measurement)//2]
         # second half is Bob's measurement
@@ -108,8 +118,10 @@ def exec():
 
         print(f'Round {rounds:>3}: {len(alice_key):,}/{n_img_bits} key bits \r', end='')
     
-    alice_key = np.array(alice_key[:n_img_bits], dtype=np.uint8)
-    bob_key   = np.array(bob_key  [:n_img_bits], dtype=np.uint8)
+    alice_key = np.array(alice_key[:n_img_bits], dtype=np.int8)
+    bob_key   = np.array(bob_key  [:n_img_bits], dtype=np.int8)
+    print(alice_key)
+    print(bob_key)
     assert np.array_equal(alice_key, bob_key)
     print(f'\nKey done: {len(alice_key):,} bits')
 
