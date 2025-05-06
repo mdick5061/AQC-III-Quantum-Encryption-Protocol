@@ -7,7 +7,7 @@ rng = secrets.SystemRandom()
 
 # — user tweakables —
 IMG_PATH        = pathlib.Path('download.png')
-BLOCK_SIZE      = 5
+BLOCK_SIZE      = 10
 ABORT_THRESHOLD = 0.11
 SAMPLE_RATE     = 0.10
 
@@ -17,7 +17,7 @@ if not IMG_PATH.exists():
 # n_img_bits = len(img_bytes)*8
 # print(f'Image size: {len(img_bytes):,} bytes ({n_img_bits:,} bits)')
 img_bytes = None
-n_img_bits = 32
+n_img_bits = 64
 
 def random_bits(n):
     return np.random.randint(2, size=n, dtype=np.int8)
@@ -88,7 +88,17 @@ def bits_to_bytes(bits):
 def exec(): 
     alice_key = []
     bob_key   = []
+    histo = [0] * 16
     rounds    = 0
+
+    def lookup_histo(a, b, s1, s2): 
+        return (a << 3) + (b << 2) + (s1 << 1) + s2
+
+    def incr_histo(a, b, s1, s2): 
+        histo[lookup_histo(a, b, s1, s2)] += 1
+    
+    def get_histo(a, b, s1, s2): 
+        return histo[lookup_histo(a, b, s1, s2)]
 
     while len(alice_key) < n_img_bits: 
         rounds += 1
@@ -112,18 +122,39 @@ def exec():
         sift_A = meas_A[keep_mask]
         sift_B = meas_B[keep_mask]
 
+        # Update statistics
+        for a, b, s1, s2 in zip(bases_A, bases_B, meas_A, meas_B): 
+            if a == 0 and b == -1: incr_histo(0, 0, s1, s2)
+            if a == 0 and b == 1: incr_histo(0, 1, s1, s2)
+            if a == 2 and b == -1: incr_histo(1, 0, s1, s2)
+            if a == 2 and b == 1: incr_histo(1, 1, s1, s2)
+
         # Flip Bob's bits so measurements are equal
         alice_key.extend(sift_A.tolist())
         bob_key.extend((1^sift_B).tolist())
 
         print(f'Round {rounds:>3}: {len(alice_key):,}/{n_img_bits} key bits \r', end='')
     
+    def e(a, b): 
+        def n(s1, s2): return get_histo(a, b, s1, s2)
+        return (n(1, 1) - n(1, 0) - n(0, 1) + n(0, 0)) / \
+               (n(1, 1) + n(1, 0) + n(0, 1) + n(0, 0))
+    
+    s = e(0, 0) + e(0, 1) - e(1, 0) + e(1, 1)
+    
     alice_key = np.array(alice_key[:n_img_bits], dtype=np.int8)
     bob_key   = np.array(bob_key  [:n_img_bits], dtype=np.int8)
-    print(alice_key)
-    print(bob_key)
+    # print(alice_key)
+    # print(bob_key)
+    # print(s)
+
     assert np.array_equal(alice_key, bob_key)
     print(f'\nKey done: {len(alice_key):,} bits')
+
+    if s < 2.12132: 
+        print(f"{s} < 1.5 sqrt(2); key is secure.")
+    else: 
+        print(f"{s} >= 1.5 sqrt(2); key is not secure.")
 
     key_bytes = bits_to_bytes(alice_key)
     cipher    = bytes(m ^ k for m,k in zip(img_bytes, key_bytes))
