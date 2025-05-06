@@ -62,7 +62,7 @@ def measure_circuit(alice_bases, bob_bases):
     assert size == len(bob_bases)
     for i in range(size): 
         qc.rx(-alice_bases[i] * np.pi/4, i)
-        qc.rx(-bob_bases[i] * np.pi/4, i)
+        qc.rx(-bob_bases[i] * np.pi/4, i+size)
     return qc
 
 def full_quantum_circuit(source_bits, source_bases, alice_bases, bob_bases): 
